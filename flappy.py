@@ -57,34 +57,19 @@ class Bird(pygame.sprite.Sprite):
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
-    def summon_central_pipe(self, pipes):
-        pipe_bottom = pipes[0]
-        pipe_top = pipes[1]
-        central_pipe_height = pipe_bottom.y - pipe_top.bottom
-        self.central_pipe = (pipe_bottom.x,
-                             pipe_top.bottom,
-                             30,
-                             central_pipe_height)
-        pygame.Rect(self.central_pipe)
-
-        pygame.draw.rect(self.image, (255, 255, 255), self.central_pipe)
-
-    def check_collision(self, pipes, top_bottom):
-        self.summon_central_pipe(pipes)
-        pipe_bottom = pipes[0]
-        pipe_top = pipes[1]
-
+    def check_collision(self, pipe):
+        bird_top = self.rect.top
         bird_right = self.rect.right
-        bird_left = self.rect.left
-        bird_top = self.rect.bottom - self.size
         bird_bottom = self.rect.bottom
+        bird_left = self.rect.left
 
-        pipe_top_bottom = top_bottom
+        central_pipe = pipe.central_space
 
-        # if (bird_right > pipe_bottom.left and bird_left < pipe_bottom.right) \
-        #         and (bird_bottom > pipe_bottom[1] or bird_top < pipe_top_bottom + 35):
-        #     return True
-        # return False
+        if bird_right > central_pipe.left and bird_left < central_pipe.right \
+            and (bird_top < central_pipe.top or bird_bottom > central_pipe.bottom):
+                return True
+
+        return False
 
 
 class Pipe(pygame.sprite.Sprite):
@@ -122,13 +107,24 @@ class Pipe(pygame.sprite.Sprite):
     def returns(self):
         return self.height_top
 
+    def set_pipes_props(self):
+        self.top_pipe = (self.central_space.x,
+                            0,
+                            self.central_space.width,
+                            self.central_space.y)
+
+        self.bottom_pipe = (self.central_space.x,
+                            self.central_space.bottom,
+                            self.central_space.width,
+                            SCREEN_HEIGHT)
+
     def draw(self, surface):
-        pygame.draw.rect(surface, self.set_color(TEAL), self.central_space)
-        # pygame.draw.rect(surface, self.set_color(TEAL, collision), self.rect)
-        # pygame.draw.rect(surface, self.set_color(TEAL, collision), self.rect_top)
-        pass
+        # pygame.draw.rect(surface, self.set_color(TEAL, ifCollision), self.central_space)
+        pygame.draw.rect(surface, self.set_color(TEAL, ifCollision), self.top_pipe)
+        pygame.draw.rect(surface, self.set_color(TEAL, ifCollision), self.bottom_pipe)
 
     def update(self):
+        self.set_pipes_props()
         self.central_space.move_ip(-3, 0)
         # self.rect.move_ip(-3, 0)
         # self.rect_top.move_ip(-3, 0)
@@ -157,7 +153,7 @@ while True:
     # Update
     player.update()
     pipe.update()
-    # ifCollision = player.check_collision(pipe.get_pipes(), pipe.returns())
+    ifCollision = player.check_collision(pipe)
 
     # render
     screen_surface.fill(DARK)
